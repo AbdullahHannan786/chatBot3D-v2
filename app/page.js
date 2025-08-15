@@ -14,7 +14,7 @@ export default function Home() {
     const initializePage = async () => {
       // First, reset the context
       try {
-        await fetch("http://127.0.0.1:5001/reset", {
+        await fetch("/api/reset", {
           method: "POST",
           headers: { "Content-Type": "application/json" }
         })
@@ -37,7 +37,7 @@ export default function Home() {
       // Then send greeting with audio
       const sendGreeting = async () => {
         try {
-          const res = await fetch("http://127.0.0.1:5001/ask", {
+          const res = await fetch("/api/ask", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text: "Hello! Welcome to the website!" }),
@@ -61,35 +61,27 @@ export default function Home() {
               const audio = new Audio('data:audio/wav;base64,' + data.audio)
               audio.volume = 0.8
               
-              // Set attributes that help with autoplay
               audio.muted = false
               audio.preload = 'auto'
               
-              // Hide caption when audio ends
               audio.onended = () => {
                 console.log('Greeting audio ended')
                 setShowCaption(false)
               }
               
-              // Force autoplay for greeting - try multiple approaches
               const forcePlay = async () => {
                 try {
-                  // Attempt 1: Direct play
                   await audio.play()
                   console.log('Greeting audio playing successfully')
                 } catch (error) {
                   console.log('Direct play failed, trying workarounds:', error)
-                  
                   try {
-                    // Attempt 2: Set volume and try again
                     audio.volume = 1.0
                     await audio.play()
                     console.log('Greeting audio playing after volume adjustment')
                   } catch (error2) {
                     console.log('Volume adjustment failed, trying muted play:', error2)
-                    
                     try {
-                      // Attempt 3: Start muted then unmute (browser workaround)
                       audio.muted = true
                       await audio.play()
                       setTimeout(() => {
@@ -98,14 +90,11 @@ export default function Home() {
                       }, 100)
                     } catch (error3) {
                       console.log('All autoplay attempts failed:', error3)
-                      // Keep caption visible for longer when audio fails
                       setTimeout(() => setShowCaption(false), 10000)
                     }
                   }
                 }
               }
-              
-              // Immediate play attempt
               forcePlay()
             } catch (audioError) {
               console.log("Greeting audio creation error:", audioError)
@@ -113,12 +102,10 @@ export default function Home() {
             }
           } else {
             console.log('No audio data received in greeting response')
-            // If no audio, hide caption after 8 seconds for greeting
             setTimeout(() => setShowCaption(false), 8000)
           }
         } catch (err) {
           console.error("Greeting error:", err)
-          // Fallback greeting without server
           setEmotion('excited_hello')
           setChikoResponse("Hey there! Welcome! I'm Chiko, your sarcastic tour guide. Ask me anything!")
           setShowCaption(true)
@@ -126,21 +113,19 @@ export default function Home() {
         }
       }
 
-      // Small delay after reset before greeting
       setTimeout(sendGreeting, 500)
     }
 
-    // Delay initialization slightly to let the page load
     const timer = setTimeout(initializePage, 1000)
     return () => clearTimeout(timer)
-  }, []) // Empty dependency array means this runs once on mount
+  }, [])
 
   const handleAsk = async () => {
     if (!text.trim()) return
     setLoading(true)
 
     try {
-      const res = await fetch("http://127.0.0.1:5001/ask", {
+      const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
@@ -155,40 +140,33 @@ export default function Home() {
         try {
           const audio = new Audio('data:audio/wav;base64,' + data.audio)
           audio.volume = 0.8
-          
-          // Hide caption when audio ends
           audio.onended = () => {
             setShowCaption(false)
           }
-          
-          // Mobile audio playbook
           const playPromise = audio.play()
           if (playPromise !== undefined) {
             playPromise.catch(error => {
               console.log("Audio autoplay prevented:", error)
-              // If audio fails, hide caption after 5 seconds as fallback
               setTimeout(() => setShowCaption(false), 5000)
             })
           }
         } catch (audioError) {
           console.log("Audio playback error:", audioError)
-          // If audio fails, hide caption after 5 seconds as fallback
           setTimeout(() => setShowCaption(false), 5000)
         }
       } else {
-        // If no audio, hide caption after 5 seconds
         setTimeout(() => setShowCaption(false), 5000)
       }
     } catch (err) {
       console.error("Error:", err)
     }
     setLoading(false)
-    setText('') // Clear the input after sending
+    setText('')
   }
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault() // Prevent default textarea behavior
+      e.preventDefault()
       handleAsk()
     }
   }
@@ -196,12 +174,9 @@ export default function Home() {
   return (
     <div className="container-fluid p-0" style={{ height: '100vh', overflow: 'hidden' }}>
       <div className="row h-100 g-0">
-        {/* Left: 3D Avatar - Stack on mobile */}
         <div className="col-12 col-md-7 d-flex align-items-center justify-content-center" style={{ height: '100vh' }}>
           <div style={{ width: '100%', height: '100%', position: 'relative' }}>
             <Avatar emotion={emotion} />
-            
-            {/* Caption overlay */}
             {showCaption && chikoResponse && (
               <div style={{
                 position: 'absolute',
@@ -231,7 +206,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Right: Chat Panel - Stack on mobile */}
         <div className="col-12 col-md-5 d-flex flex-column align-items-center justify-content-center p-3 bg-white" style={{ height: '100vh' }}>
           <h1 className="mb-3 text-center" style={{ color: '#000000', fontSize: 'clamp(1.5rem, 4vw, 2rem)' }}>Ask Chiko</h1>
           <textarea

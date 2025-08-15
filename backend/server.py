@@ -68,7 +68,7 @@ def get_gemini_reply(user_input: str) -> str:
         config=types.GenerateContentConfig(
             thinking_config=types.ThinkingConfig(thinking_budget=0),
             temperature=0.9,  # Slightly higher for more personality
-            max_output_tokens=200,  # Limit response length for captions
+            max_output_tokens=100,  # Limit response length for captions
         ),
     )
 
